@@ -367,14 +367,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     const saved=localStorage.getItem('mst_gs_url');
     if(saved){
       window.GS_URL_RUNTIME=saved;
-      console.log('✓ GS URL loaded from localStorage:', saved.substring(0,60)+'...');
+      window.GS_URL_RUNTIME = GS_URL || saved; console.log('✓ GS URL ready:', (GS_URL||saved).substring(0,60)+'...');
       setTimeout(loadSharedState, 600);
     } else {
       console.warn('No GS URL in localStorage — showing config banner');
-      setTimeout(()=>{
-        const b=document.getElementById('gs-banner');
-        if(b)b.style.display='flex';
-      },800);
+      // URL is hardcoded — no banner needed
+      console.log('✓ GS URL hardcoded — sync ready');
     }
   }catch(e){console.error('DOMContentLoaded error:',e);}
 });
@@ -6896,19 +6894,20 @@ function closeUncheckModal(){
 
 // ===== GOOGLE SHEETS SYNC =====
 // Paste your Google Apps Script Web App URL here after deployment:
-const GS_URL = '';  // <-- REPLACE WITH YOUR APPS SCRIPT URL
+const GS_URL = 'https://script.google.com/macros/s/AKfycbzbua4VnEhkCcS3iY9fXDdF537I937kVfbQTZIVJHnmVgS6IzRHPfWQnIY2UxcciDxt5Q/exec';  // Hardcoded Apps Script URL
 
 // Always returns the freshest URL from any source
 function getGsUrl(){
-  // 1. Runtime variable (set by DOMContentLoaded or console)
+  // 1. Hardcoded URL (always reliable)
+  if(GS_URL) return GS_URL;
+  // 2. Runtime variable
   if(window.GS_URL_RUNTIME) return window.GS_URL_RUNTIME;
-  // 2. localStorage
+  // 3. localStorage
   try{
     const saved = localStorage.getItem('mst_gs_url');
     if(saved){ window.GS_URL_RUNTIME = saved; return saved; }
   }catch(e){}
-  // 3. Hardcoded fallback
-  return GS_URL || '';
+  return '';
 }
 
 // Find customer data by CRM ID
