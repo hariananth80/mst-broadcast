@@ -281,48 +281,7 @@ function saveGsUrl(){
 
 // Override syncToSheets to use runtime URL if set
 const _origSync=syncToSheets;
-async function syncToSheets(id){
-  const url=getGsUrl();
-  if(!url){console.warn('GS URL not set — skipping sync for',id);return;}
-  const st=ST[id]||{};
-  const c=getCustData(id);
-  if(!c.id){console.warn('Customer not found for id',id);return;}
-  const payload={
-    crmId:id, name:c.n||'', custId:c.cid||'', phone:c.ph||'',
-    revenue:c.r||0, channel:c.ch||'', trips:c.tc||0,
-    assignee:st.assignee||'', sent:!!st.sent,
-    noAccess:(st.nac===true||st.nac==='true')?'YES':'NO', notes:st.notes||'',
-    dateSent:fmtDate(st.bd||''),
-    markedAt:new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok'}),
-    timestamp:new Date().toISOString()
-  };
-  const activeUrl = url || GS_URL;
-  try{
-    // Build URL with query params - most reliable with no-cors
-    const params = new URLSearchParams({
-      action:    'sync',
-      crmId:     payload.crmId,
-      name:      payload.name,
-      custId:    payload.custId,
-      phone:     payload.phone,
-      revenue:   String(payload.revenue),
-      channel:   payload.channel,
-      trips:     String(payload.trips),
-      assignee:  payload.assignee,
-      sent:      payload.sent ? 'YES' : 'NO',
-      noAccess:  payload.noAccess === 'YES' ? 'YES' : 'NO',
-      notes:     payload.notes||'',
-      dateSent:  payload.dateSent||'',
-      markedAt:  payload.markedAt||''
-    });
-    await fetch(activeUrl + '?' + params.toString(), {method:'GET', mode:'no-cors'});
-    console.log('✓ Synced:',c.n,'sent='+params.get('sent'),'noAccess='+params.get('noAccess'));
-    showSyncStatus('✓ Synced');
-  }catch(e){
-    console.error('✗ Sync failed for',c.n,':',e);
-    showSyncStatus('⚠ Sync failed');
-  }
-}
+
 
 // Show a small sync indicator in the header
 async function testSheetConnection(){
@@ -6950,37 +6909,36 @@ function toISO(d){
 
 // Sync a row to Google Sheets when broadcast is marked sent
 async function syncToSheets(id){
-  if(!GS_URL){
-    console.warn('Google Sheets URL not configured — skipping sync');
-    return;
-  }
+  const url=getGsUrl();
+  if(!url){console.warn('GS URL not set — skipping sync for',id);return;}
   const st=ST[id]||{};
   const c=getCustData(id);
-  if(!c.id)return;
-  const payload={
-    crmId:      id,
-    name:       c.n||'',
-    custId:     c.cid||'',
-    phone:      c.ph||'',
-    revenue:    c.r||0,
-    channel:    c.ch||'',
-    trips:      c.tc||0,
-    assignee:   st.assignee||'',
-    sent:       !!st.sent,
-    dateSent:   fmtDate(st.bd||''),
-    markedAt:   new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok'}),
-    timestamp:  new Date().toISOString()
-  };
+  if(!c.id){console.warn('Customer not found for id',id);return;}
+  const noAccessVal=(st.nac===true||st.nac==='true')?'YES':'NO';
+  const sentVal=st.sent?'YES':'NO';
   try{
-    await fetch(GS_URL,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
+    const params=new URLSearchParams({
+      action:   'sync',
+      crmId:    id,
+      name:     c.n||'',
+      custId:   c.cid||'',
+      phone:    c.ph||'',
+      revenue:  String(c.r||0),
+      channel:  c.ch||'',
+      trips:    String(c.tc||0),
+      assignee: st.assignee||'',
+      sent:     sentVal,
+      noAccess: noAccessVal,
+      notes:    st.notes||'',
+      dateSent: fmtDate(st.bd||''),
+      markedAt: new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok'})
     });
-    console.log('Synced to Sheets:', c.n);
+    await fetch(url+'?'+params.toString(),{method:'GET',mode:'no-cors'});
+    console.log('✓ Synced:',c.n,'sent='+sentVal,'noAccess='+noAccessVal);
+    showSyncStatus('✓ Synced');
   }catch(e){
-    console.error('Sheets sync failed:',e);
+    console.error('✗ Sync failed for',c.n,':',e);
+    showSyncStatus('⚠ Sync failed');
   }
 }
 
