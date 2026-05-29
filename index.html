@@ -289,7 +289,7 @@ async function syncToSheets(id){
     crmId:id, name:c.n||'', custId:c.cid||'', phone:c.ph||'',
     revenue:c.r||0, channel:c.ch||'', trips:c.tc||0,
     assignee:st.assignee||'', sent:!!st.sent,
-    noAccess:!!st.nac, notes:st.notes||'',
+    noAccess:(st.nac===true||st.nac==='true')?'YES':'NO', notes:st.notes||'',
     dateSent:fmtDate(st.bd||''),
     markedAt:new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok'}),
     timestamp:new Date().toISOString()
@@ -297,9 +297,9 @@ async function syncToSheets(id){
   const activeUrl = url || GS_URL;
   try{
     await fetch(activeUrl,{method:'POST',mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify(payload)});
-    console.log('✓ Synced to Sheets:',c.n,'| sent:',payload.sent,'| noAccess:',payload.noAccess,'| date:',payload.dateSent);
+    console.log('✓ Synced to Sheets:',c.n,'| sent:',payload.sent,'| noAccess:',payload.noAccess,'| nac in ST:',ST[id]&&ST[id].nac,'| date:',payload.dateSent);
     showSyncStatus('✓ Synced');
   }catch(e){
     console.error('✗ Sync failed for',c.n,':',e);
