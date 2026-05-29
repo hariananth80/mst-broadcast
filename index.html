@@ -299,7 +299,7 @@ async function syncToSheets(id){
     await fetch(activeUrl,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)});
-    console.log('✓ Synced to Sheets:',c.n,'| sent:',payload.sent,'| date:',payload.dateSent);
+    console.log('✓ Synced to Sheets:',c.n,'| sent:',payload.sent,'| noAccess:',payload.noAccess,'| date:',payload.dateSent);
     showSyncStatus('✓ Synced');
   }catch(e){
     console.error('✗ Sync failed for',c.n,':',e);
