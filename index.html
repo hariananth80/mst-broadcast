@@ -68,7 +68,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .snote.show{opacity:1}
 
 /* TABLE HEADER */
-.th{display:grid;grid-template-columns:42px 160px 90px 120px 95px 95px 70px 105px 55px 100px 50px 150px;padding:7px 32px;background:linear-gradient(90deg,#0a6e6e,#0e9e9e);border-bottom:none;font-size:9px;font-weight:600;color:#ffffff;letter-spacing:.12em;text-transform:uppercase;position:sticky;top:89px;z-index:50}
+.th{display:grid;grid-template-columns:42px 155px 85px 115px 90px 90px 65px 100px 50px 95px 50px 80px 150px;padding:7px 32px;background:linear-gradient(90deg,#0a6e6e,#0e9e9e);border-bottom:none;font-size:9px;font-weight:600;color:#ffffff;letter-spacing:.12em;text-transform:uppercase;position:sticky;top:89px;z-index:50}
 .th>div{padding:0 5px}
 
 /* ROWS */
@@ -79,10 +79,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .rw.no-access{background:#fef9c3 !important;border-left:3px solid #f59e0b}
 .rw.no-access .cn{color:var(--text3)}
 .nac-label{cursor:pointer;display:flex;justify-content:center}
+.clg-label{cursor:pointer;display:flex;justify-content:center}
+.clg-chk{display:inline-block;background:#fde8ef;color:#be185d;border:1.5px solid #f472b6;border-radius:4px;padding:1px 7px;font-size:13px;font-weight:700}
+.clg-unchk{display:inline-block;color:var(--text3);font-size:12px;text-align:center}
 .nac-chk{display:inline-block;background:#fef3c7;color:#92400e;border:1.5px solid #f59e0b;border-radius:4px;padding:1px 7px;font-size:13px;font-weight:700}
 .nac-unchk{display:inline-block;color:var(--text3);font-size:12px;text-align:center}
 
-.rm{display:grid;grid-template-columns:42px 160px 90px 120px 95px 95px 70px 105px 55px 100px 50px 150px;align-items:center;padding:0 32px;min-height:50px;cursor:pointer}
+.rm{display:grid;grid-template-columns:42px 155px 85px 115px 90px 90px 65px 100px 50px 95px 50px 80px 150px;align-items:center;padding:0 32px;min-height:50px;cursor:pointer}
 .rm>div{padding:0 5px}
 
 .rk{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;border:1.5px solid var(--border2);color:var(--text3);background:var(--bg);flex-shrink:0}
@@ -250,7 +253,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 <div class="th">
   <div></div><div>Customer</div><div>Cust ID</div><div>Phone Number</div><div>Revenue</div><div>Channel</div>
-  <div>Trips</div><div>Assignee 🔒</div><div>No Access</div><div>Broadcast Date</div><div>Sent ✓</div><div>Notes</div>
+  <div>Trips</div><div>Assignee 🔒</div><div>No Access</div><div>Broadcast Date</div><div>Sent ✓</div><div>Left Group</div><div>Notes</div>
 </div>
 
 <div class="list" id="list"></div>
@@ -322,7 +325,7 @@ function showSyncStatus(msg){
 async function syncAllToSheets(){
   const url=getGsUrl();
   if(!url){alert('Google Sheets URL not configured.\n\nPlease paste your /exec URL in the teal banner at the top of the dashboard.');return;}
-  const toSync=Object.keys(ST).filter(id=>{const s=ST[id];return s.sent||s.nac||s.notes||s.bd;});
+  const toSync=Object.keys(ST).filter(id=>{const s=ST[id];return s.sent||s.nac||s.clg||s.notes||s.bd;});
   if(!toSync.length){alert('Nothing to sync — no sent or updated records found.');return;}
   const btn=document.getElementById('sync-all-btn');
   if(btn){btn.textContent='Syncing '+toSync.length+'...';btn.disabled=true;}
@@ -6678,6 +6681,7 @@ async function loadSharedState(){
       if(!ST[row.crmId])ST[row.crmId]={};
       if(row.sent==='YES')ST[row.crmId].sent=true;
       if(row.noAccess==='YES')ST[row.crmId].nac=true;
+      if(row.leftGroup==='YES')ST[row.crmId].clg=true;
       if(row.dateSent)ST[row.crmId].bd=row.dateSent;
       if(row.assignee)ST[row.crmId].assignee=row.assignee;
     });
@@ -6750,8 +6754,9 @@ function render(){
     const sent=!!st.sent;
     const open=!!st.open;
     const nac=!!st.nac;
+    const clg=!!st.clg;
     const notes=st.notes||'';
-    return`<div class="rw${sent?' done':''}${nac?' no-access':''}" id="rw-${c.id}"><div class="rm" onclick="tog('${c.id}')"><div><span class="rk ${rc}">${rank}</span></div><div><div class="cn">${c.n}</div><div class="rbar"><div class="rfil" style="width:${pct}%"></div></div></div><div><div class="cidcell">${c.cid||'<span style=\"color:var(--text3)\">—</span>'}</div></div><div><div class="phcell">${c.ph||'<span style=\"color:var(--text3)\">—</span>'}</div></div><div><div class="rvn">${fr(c.r)}</div></div><div><span class="chbadge ${chc(c.ch)}">${c.ch==='—'?'—':c.ch}</span></div><div><div class="tt${open?' open':''}" id="tt-${c.id}"><span class="ar">▶</span> ${c.tc} trip${c.tc!==1?'s':''}</div></div><div onclick="event.stopPropagation()">${adminUnlocked ? `<select class="asel" onchange="sv('${c.id}','assignee',this.value)"><option value="">Assign…</option>${['Hari','Suprith','Srinath','View','Camille'].map(a=>`<option${st.assignee===a?' selected':''}>${a}</option>`).join('')}</select>` : `<div class="asel-locked">${st.assignee || '<span style=\"color:var(--text3)\">—</span>'}</div>`}</div><div onclick="event.stopPropagation()"><label class="cbl nac-label"><input type="checkbox"${nac?' checked':''} onchange="hna('${c.id}',this.checked)"><span class="${nac?'nac-chk':'nac-unchk'}">${nac?'✗':'—'}</span></label></div><div onclick="event.stopPropagation()"><input type="date" class="di" value="${toISO(st.bd||'')}" onchange="sv('${c.id}','bd',this.value)" title="Date broadcast sent"></div><div onclick="event.stopPropagation()"><label class="cbl"><input type="checkbox"${sent?' checked':''} onchange="hs('${c.id}',this.checked)"><span class="${sent?'sl':'ul'}">${sent?'Sent':'Mark'}</span></label></div><div onclick="event.stopPropagation()"><input type="text" class="notes-inline" placeholder="Add noteâ¦" value="${(st.notes||''). replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onchange="sn('${c.id}',this.value)"></div></div><div class="tp${open?' open':''}" id="tp-${c.id}"><div class="ti"><div style="padding:6px 0;font-size:11px;color:var(--text3);font-style:italic">${(()=>{const ts=T[c.id];if(!ts||!ts.length){const phHtml=c.ph?'<span style="background:#e4f8f2;color:#0a6e6e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600;margin-right:6px">📱 '+c.ph+'</span>':''; const cidHtml=c.cid?'<span style="background:#fff4ee;color:#c85010;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600">🆔 '+c.cid+'</span>':''; return (phHtml||cidHtml?'<div style="padding:4px 0 6px;display:flex;gap:4px;flex-wrap:wrap">'+phHtml+cidHtml+'</div>':'')+ '<em style="font-size:11px;color:var(--text3)">No completed trips in loaded data — '+c.tc+' trip'+(c.tc!==1?'s':'')+' recorded in Airtable.</em>';}const phHtml=c.ph?'<div style="display:inline-block;background:#e4f8f2;color:#0a6e6e;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;margin:0 4px 4px 0">📱 '+c.ph+'</div>':''; const cidHtml=c.cid?'<div style="display:inline-block;background:#fff4ee;color:#c85010;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;margin:0 4px 4px 0">🆔 '+c.cid+'</div>':''; const contactRow=(phHtml||cidHtml)?'<div style="padding:2px 0 7px;display:flex;flex-wrap:wrap">'+phHtml+cidHtml+'</div>':''; return contactRow+ts.map(t=>{ const a=t.ar?t.ar.split('-').slice(2,3)+'/'+t.ar.split('-').slice(1,2)+'/'+t.ar.split('-').slice(0,1):''; const d=t.co?t.co.split('-').slice(2,3)+'/'+t.co.split('-').slice(1,2)+'/'+t.co.split('-').slice(0,1):''; const cost=t.cost?'฿'+Math.round(t.cost).toLocaleString():''; const grp=t.gn||'<span style="color:var(--text3);font-style:italic">No group name</span>'; return '<div class="tr"><div class="tdot"></div><div class="tn"><div class="tgn">'+grp+'</div><div class="tdt">'+a+(d?' → '+d:'')+' '+(cost?'<span class="tc">'+cost+'</span>':'')+'</div></div></div>'; }).join('');})()}</div><div class="notes-wrap"><div class="notes-label">💬 Notes <span class="notes-saved" id="ns-${c.id}">Saved ✓</span></div><textarea class="notes-ta" placeholder="Add notes about this customer or broadcast…" onchange="sn('${c.id}',this.value)">${st.notes||''}</textarea></div></div></div></div>`;
+    return`<div class="rw${sent?' done':''}${nac?' no-access':''}" id="rw-${c.id}"><div class="rm" onclick="tog('${c.id}')"><div><span class="rk ${rc}">${rank}</span></div><div><div class="cn">${c.n}</div><div class="rbar"><div class="rfil" style="width:${pct}%"></div></div></div><div><div class="cidcell">${c.cid||'<span style=\"color:var(--text3)\">—</span>'}</div></div><div><div class="phcell">${c.ph||'<span style=\"color:var(--text3)\">—</span>'}</div></div><div><div class="rvn">${fr(c.r)}</div></div><div><span class="chbadge ${chc(c.ch)}">${c.ch==='—'?'—':c.ch}</span></div><div><div class="tt${open?' open':''}" id="tt-${c.id}"><span class="ar">▶</span> ${c.tc} trip${c.tc!==1?'s':''}</div></div><div onclick="event.stopPropagation()">${adminUnlocked ? `<select class="asel" onchange="sv('${c.id}','assignee',this.value)"><option value="">Assign…</option>${['Hari','Suprith','Srinath','View','Camille'].map(a=>`<option${st.assignee===a?' selected':''}>${a}</option>`).join('')}</select>` : `<div class="asel-locked">${st.assignee || '<span style=\"color:var(--text3)\">—</span>'}</div>`}</div><div onclick="event.stopPropagation()"><label class="cbl nac-label"><input type="checkbox"${nac?' checked':''} onchange="hna('${c.id}',this.checked)"><span class="${nac?'nac-chk':'nac-unchk'}">${nac?'✗':'—'}</span></label></div><div onclick="event.stopPropagation()"><input type="date" class="di" value="${toISO(st.bd||'')}" onchange="sv('${c.id}','bd',this.value)" title="Date broadcast sent"></div><div onclick="event.stopPropagation()"><label class="cbl"><input type="checkbox"${sent?' checked':''} onchange="hs('${c.id}',this.checked)"><span class="${sent?'sl':'ul'}">${sent?'Sent':'Mark'}</span></label></div><div onclick="event.stopPropagation()"><label class="cbl clg-label"><input type="checkbox"${clg?' checked':''} onchange="hclg('${c.id}',this.checked)"><span class="${clg?'clg-chk':'clg-unchk'}">${clg?'✓':'—'}</span></label></div><div onclick="event.stopPropagation()"><input type="text" class="notes-inline" placeholder="Add noteâ¦" value="${(st.notes||''). replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onchange="sn('${c.id}',this.value)"></div></div><div class="tp${open?' open':''}" id="tp-${c.id}"><div class="ti"><div style="padding:6px 0;font-size:11px;color:var(--text3);font-style:italic">${(()=>{const ts=T[c.id];if(!ts||!ts.length){const phHtml=c.ph?'<span style="background:#e4f8f2;color:#0a6e6e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600;margin-right:6px">📱 '+c.ph+'</span>':''; const cidHtml=c.cid?'<span style="background:#fff4ee;color:#c85010;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600">🆔 '+c.cid+'</span>':''; return (phHtml||cidHtml?'<div style="padding:4px 0 6px;display:flex;gap:4px;flex-wrap:wrap">'+phHtml+cidHtml+'</div>':'')+ '<em style="font-size:11px;color:var(--text3)">No completed trips in loaded data — '+c.tc+' trip'+(c.tc!==1?'s':'')+' recorded in Airtable.</em>';}const phHtml=c.ph?'<div style="display:inline-block;background:#e4f8f2;color:#0a6e6e;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;margin:0 4px 4px 0">📱 '+c.ph+'</div>':''; const cidHtml=c.cid?'<div style="display:inline-block;background:#fff4ee;color:#c85010;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;margin:0 4px 4px 0">🆔 '+c.cid+'</div>':''; const contactRow=(phHtml||cidHtml)?'<div style="padding:2px 0 7px;display:flex;flex-wrap:wrap">'+phHtml+cidHtml+'</div>':''; return contactRow+ts.map(t=>{ const a=t.ar?t.ar.split('-').slice(2,3)+'/'+t.ar.split('-').slice(1,2)+'/'+t.ar.split('-').slice(0,1):''; const d=t.co?t.co.split('-').slice(2,3)+'/'+t.co.split('-').slice(1,2)+'/'+t.co.split('-').slice(0,1):''; const cost=t.cost?'฿'+Math.round(t.cost).toLocaleString():''; const grp=t.gn||'<span style="color:var(--text3);font-style:italic">No group name</span>'; return '<div class="tr"><div class="tdot"></div><div class="tn"><div class="tgn">'+grp+'</div><div class="tdt">'+a+(d?' → '+d:'')+' '+(cost?'<span class="tc">'+cost+'</span>':'')+'</div></div></div>'; }).join('');})()}</div><div class="notes-wrap"><div class="notes-label">💬 Notes <span class="notes-saved" id="ns-${c.id}">Saved ✓</span></div><textarea class="notes-ta" placeholder="Add notes about this customer or broadcast…" onchange="sn('${c.id}',this.value)">${st.notes||''}</textarea></div></div></div></div>`;
   }).join('');
 }
 
@@ -6782,6 +6787,18 @@ function hna(id,v){
 
 // Pending uncheck request — stores the record ID waiting for admin PIN
 let _pendingUncheck = null;
+
+function hclg(id,v){
+  sv(id,'clg',v);
+  const rw=document.getElementById('rw-'+id);
+  if(rw){
+    const cb=rw.querySelector('.clg-label input');
+    if(cb) cb.checked=v;
+    const sp=rw.querySelector('.clg-chk,.clg-unchk');
+    if(sp){sp.className=v?'clg-chk':'clg-unchk';sp.textContent=v?'✓':'—';}
+  }
+  syncToSheets(id);
+}
 
 function hs(id,v){
   if(!v){
@@ -6931,10 +6948,11 @@ async function syncToSheets(id){
       noAccess: noAccessVal,
       notes:    st.notes||'',
       dateSent: fmtDate(st.bd||''),
-      markedAt: new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok'})
+      markedAt: new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok'}),
+      leftGroup:(st.clg===true||st.clg==='true')?'YES':'NO'
     });
     await fetch(url+'?'+params.toString(),{method:'GET',mode:'no-cors'});
-    console.log('✓ Synced:',c.n,'sent='+sentVal,'noAccess='+noAccessVal);
+    console.log('✓ Synced:',c.n,'sent='+sentVal,'noAccess='+noAccessVal,'leftGroup='+params.get('leftGroup'));
     showSyncStatus('✓ Synced');
   }catch(e){
     console.error('✗ Sync failed for',c.n,':',e);
